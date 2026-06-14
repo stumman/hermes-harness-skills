@@ -1,17 +1,13 @@
 ---
 name: nerd-code
-version: 1.3.12
+version: 1.5.0
 description: >
   Write production-grade code from a one-line prompt. Runs the full pipeline:
   restraint ladder → spec-forge → behavioral-spec → architect → contract-first → implement →
-  test-engineer → critical-review → refactor. v1.3.12: binary zero-length guard refinement
-  (case A vs B — break vs skip-alloc). v1.3.11: subagent Stage 7 dead-code enforcement
-  (trace exports to call sites). v1.3.10: compaction merge tombstone propagation,
-  binary zero-length guard, external data try/catch pitfalls. v1.3.9: numeric constructor
-  division guard. v1.3.8: mutable internal state exposure. v1.3.7: multi-stream operator
-  output + drain-finalization. v1.3.5: anti-bloat comment/error-handling rules. v1.3.4: DP
-  table memory cap. v1.3.3: async resource cleanup. v1.3.2: DSL parser pitfalls. v1.3.1: spec
-  coverage gate + prototype pollution. v1.3.0: SUBAGENT MODE.
+  test-engineer → critical-review → refactor. v1.5.0: Stage 0 is now COMPLEXITY CLASSIFIER
+  with TRIVIAL/MEDIUM/COMPLEX routing + UNBYPASSABLE hard exit rules (SWE-bench proven:
+  raw model 242s 1-line fix vs full pipeline 600s timeout). v1.4.0: Stage 0 HARD EXIT.
+  v1.3.0: SUBAGENT MODE.
 ---
 ---
 # Nerd Code — Production-Grade Code from a Single Prompt
@@ -23,14 +19,14 @@ You write code like a senior staff engineer who has seen every architecture, eve
 When you are a subagent spawned by a parent conductor or implementation lens, use THIS condensed pipeline (~500 tokens). Do NOT load references — the parent has already pre-computed spec, contracts, and architecture.
 
 **Quick Pipeline (7 stages, condensed):**
-0. **RESTRAINT:** Does this need to exist? stdlib? native? installed dep? one line? If rung 1-5 holds → stop, ship lean solution.
+0. **COMPLEXITY CLASSIFIER (MANDATORY):** Output `COMPLEXITY: [TRIVIAL|MEDIUM|COMPLEX]` before anything else. TRIVIAL (≤5 lines, clear root cause) → HARD EXIT. Skip to Stage 4+5 only. SWE-bench proven: full pipeline on 1-line fix = 600s timeout vs raw model 242s. MEDIUM (5-30 lines) → Stages 1,3,4,5,6. COMPLEX → Full 1-7. Rule: if TRIVIAL and ran more than Stage 4+5 = VIOLATION.
 1. **SPEC:** Goal, in/out of scope, testable ACs, input/output shapes, edge cases, open questions. For multi-dimensional features (e.g., "N contexts"), verify each dimension has an AC or explicit scope decision.
-2. **BEHAVIORAL:** Per AC: failure modes, invariants. Stateful: transition table (valid + invalid). Resume paths for every non-terminal state.
-3. **ARCHITECT:** Monolith-first. Deps inward. Boundaries on change axes. DAG, no cycles. ADR for non-obvious choices.
-4. **CONTRACTS:** Types before bodies. Illegal states unrepresentable. Validate at edge. Every public function typed (inputs, outputs, errors).
-5. **IMPLEMENT:** Smallest diff. Right idiom. No magic. Delete dead code. `// ponytail:` comments for intentional tradeoffs. Match target runtime (Node strip-types: no enum, no satisfies, no param properties, .ts extensions, split type/value imports).
-6. **TEST:** ACs as test cases. Edges. Test integrity scan (no weakened assertions, no swallowed errors, no tautologies, no 0-assertion tests). Operator coverage: every operator type gets at least one test.
-7. **REVIEW + REFACTOR:** Blocker/Major/Minor. Delete unused exports/methods/types (trace every export to at least one call site — if none, delete it). Simplify. Inline one-callers. Perfect names.
+2. **BEHAVIORAL:** (COMPLEX only) Per AC: failure modes, invariants. Stateful: transition table.
+3. **ARCHITECT:** Monolith-first. Deps inward. DAG. ADR for non-obvious choices.
+4. **CONTRACTS:** Types before bodies. Illegal states unrepresentable. Validate at edge.
+5. **IMPLEMENT:** Smallest diff. Right idiom. No magic. Delete dead code. `// ponytail:` comments. Match target runtime.
+6. **TEST:** ACs as test cases. Edges. Test integrity scan. Operator coverage.
+7. **REVIEW + REFACTOR:** (MEDIUM+ only) Blocker/Major/Minor. Delete dead exports. Simplify. Inline one-callers. Perfect names.
 
 **Quality:** simplicity, correctness, placement, testability, readability, durability. Framework-free domain logic.
 
@@ -40,16 +36,57 @@ When you are a subagent spawned by a parent conductor or implementation lens, us
 
 ## The Pipeline (runs in order, gates between stages)
 
-### Stage 0: RESTRAINT LADDER (run FIRST — before any plan)
-Stop at the first rung that holds:
+### Stage 0: COMPLEXITY CLASSIFIER (MANDATORY — HARD EXIT GATE)
+
+**This is the most important stage in the entire pipeline. You MUST complete it before ANY other action. It is not optional. It is not skippable. It determines whether the pipeline runs at all.**
+
+**Step 1: OUTPUT THE CLASSIFICATION (mandatory format)**
+
+Before any plan, any code, any spec — output EXACTLY this:
+
+```
+COMPLEXITY: [TRIVIAL | MEDIUM | COMPLEX]
+RATIONALE: <one sentence>
+ESTIMATED LINES: <number>
+```
+
+**Step 2: ROUTE BASED ON CLASSIFICATION**
+
+| Classification | Criteria | Pipeline |
+|---|---|---|
+| **TRIVIAL** | ≤5 lines, clear root cause from issue, fix is a 1-liner or typo | **HARD EXIT.** Skip to Stage 4+5 only. Write fix. Write test. Done. |
+| **MEDIUM** | 5-30 lines, needs function/class design, single file | Stages 1, 3, 4, 5, 6 (skip Behavioral Spec and Refactor) |
+| **COMPLEX** | >30 lines, multi-file, architectural changes, new module | Full Stages 1-7 |
+
+**Step 3: THE UNBYPASSABLE RULES**
+
+1. If you classified **TRIVIAL** and ran ANY stage other than 4+5 → **YOU VIOLATED THIS SKILL.** Undo everything. Do the minimum.
+2. If you classified **TRIVIAL** and wrote more than 5 lines → **YOU VIOLATED THIS SKILL.** Undo. The fix is 1-5 lines.
+3. If the issue description literally tells you the root cause → it's **TRIVIAL.** Just fix it.
+4. The SWE-bench astropy__astropy-12907 test PROVED this: raw model (no skills) = 242s, correct fix. nerd-code with full pipeline = 600s timeout. On a 1-character fix. The pipeline MUST NOT run on trivial tasks.
+
+**Step 4: CLASSIFICATION EXAMPLES**
+
+```
+TRIVIAL: "separability_matrix returns wrong values for nested models — the cright[...] = 1 should be cright[...] = right"
+→ 1 line. Hard exit. Skip to Stage 4+5.
+
+MEDIUM: "Add rate limiting middleware for Express with configurable window"
+→ ~20 lines. Stages 1,3,4,5,6.
+
+COMPLEX: "Build a distributed saga orchestrator with compensation transactions"
+→ 200+ lines. Full Stages 1-7.
+```
+
+**If you're unsure, classify UP (MEDIUM instead of TRIVIAL, COMPLEX instead of MEDIUM). But if the issue describes a clear root cause with a specific line/function → TRIVIAL.**
+
+Original restraint rules still apply — stop at the first rung that holds:
 1. **Does this need to exist at all?** (YAGNI)
 2. **Does stdlib already do it?** Use it.
 3. **Does a native platform feature cover it?** Use it.
 4. **Does an already-installed dependency solve it?** Use it.
 5. **Can it be one line?** One line.
 6. **Only then:** the minimum code that works.
-
-If rung 1-5 holds → ship the lean solution immediately. Do NOT run the pipeline. The ladder prevents over-engineering.
 
 ### Stage 1: SPEC FORGE → from vague to crisp
 Turn the user's prompt into a tight spec:
@@ -185,7 +222,7 @@ Report: Blocker/Major/Minor. Fix blockers before done.
 
 ### Stage 7: REFACTOR → simplify
 After the code works and is correct:
-- **Can anything be deleted?** Unused code, dead branches, dead imports, dead local variables (computed but never read), unused exported functions/methods/classes (trace every export to at least one call site — if none exist, delete it).
+- **Can anything be deleted?** Unused code, dead branches, dead imports, dead local variables (computed but never read), unused exported functions/methods/classes (trace every export to at least one call site — if none exist, delete it). **Also scan for these frequently-missed dead-code categories (v1.3.13):** (a) empty control-flow blocks — `if (cond) { /* comment only, no executable code */ }`, empty `for`/`while` bodies, `if` blocks whose entire body is a comment; (b) parameters never passed by any call-site — trace every function/method parameter to at least one argument at a call site; if no call site passes it, delete the parameter; (c) redundant guards — conditions that are always true or always false due to an earlier control-flow check (e.g., `if (size > 0)` after a block that already `continue`s on `size === 0`). Proven: iter32 shipped with 3 items from these categories that cost 0.19 composite points.
 - **Can anything be simplified?** Two functions → one. Loop → stdlib. Override → default.
 - **Can anything be inlined?** One-caller functions, one-use types.
 - **Is the naming perfect?** Would a new teammate understand it cold?
