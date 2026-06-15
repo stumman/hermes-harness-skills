@@ -1,100 +1,286 @@
-# Hermes Harness Skills — VS Code Copilot Plugin
+# Hermes Harness Skills
 
-**Enterprise-grade AI coding harness for GitHub Copilot.** 7 self-evolving skills, 3 specialized agents, backed by Google SRE data and KDD 2026 research.
+Research-backed GitHub Copilot / agent skill pack for building, reviewing, auditing, and improving production code.
 
+This repo is intentionally split into two layers:
+
+```text
+.agents/skills/                 # canonical skills Copilot/agents load by description
+.github/prompts/                # slash-command wrappers: /build, /review, /audit, ...
+.github/agents/                 # optional specialist review personas
+.github/copilot-instructions.md # always-on repository guidance
+.agents/evals/                  # research/eval council, golden-source cases, candidate harvesters
 ```
-440K → 100K tokens (−77%) | 99.7% detection rate | 2,400 golden source bugs | 60/40 held-out split
+
+The canonical skills live in `.agents/skills/<skill>/SKILL.md`. Long references and helper scripts sit beside each skill so the main skill stays small and Copilot only loads deeper material when needed.
+
+---
+
+## Install into a project
+
+From the repo you want to use the harness in:
+
+```bash
+git clone https://github.com/stumman/hermes-harness-skills.git /tmp/hermes-harness-skills
+cp -R /tmp/hermes-harness-skills/.agents ./.agents
+mkdir -p .github
+cp -R /tmp/hermes-harness-skills/.github/prompts ./.github/prompts
+cp -R /tmp/hermes-harness-skills/.github/agents ./.github/agents
+cp /tmp/hermes-harness-skills/.github/copilot-instructions.md ./.github/copilot-instructions.md
+```
+
+Then open the target project in VS Code with GitHub Copilot Chat. Copilot should auto-discover:
+
+- skills from `.agents/skills/`
+- slash prompts from `.github/prompts/`
+- custom agents from `.github/agents/`
+- always-on instructions from `.github/copilot-instructions.md`
+
+If your Copilot build does not auto-load skills yet, paste the relevant `SKILL.md` content into chat or invoke the matching prompt file manually.
+
+---
+
+## Skill layout
+
+```text
+.agents/skills/<name>/
+  SKILL.md              # short trigger description + operational protocol
+  references/*.md       # detailed methods, loaded only when needed
+  scripts/*             # deterministic helper scripts / graders
+  templates/*           # optional templates
+```
+
+Current skills:
+
+| Skill | Use when | Best entry point |
+|---|---|---|
+| `nerd-code` | Build or implement production code from a rough request | `/build` |
+| `conductor` | Multi-step feature, migration, refactor, or work needing parallel review lenses | `/orchestrate` |
+| `critical-review` | Pre-ship review of a diff/PR, severity classification, fix suggestions | `/review` |
+| `ponytail-audit` | Bug/code audit with detector-validator discipline | `/audit` |
+| `security-sentinel` | Deep security/threat-model/OWASP/CWE review | `/secaudit` |
+| `ponytail` | Minimal correct solution, dependency/abstraction deletion, YAGNI check | `/lazy` |
+| `copilot-memory-harness` | Set up persistent project memory and Copilot working-memory conventions | direct request |
+| `skill-doctor` | Improve a skill using eval-backed, keep/revert discipline | `improve-skill.prompt.md` |
+| `skill-anatomy-optimizer` | Static anatomy audit of skills against the repo standard | `diagnose-skill.prompt.md` |
+
+---
+
+## Best prompts for real work
+
+### 1. Build a spec before code
+
+Use this when you want a clean feature spec, acceptance criteria, and test plan before implementation:
+
+```text
+/orchestrate Build a spec for <feature>.
+Context:
+- Goal: <user/business outcome>
+- Current files: <paths>
+- Constraints: <performance/security/backcompat/deadline>
+- Non-goals: <what must not be built>
+
+Do not implement yet. First produce:
+1. crisp goal
+2. in/out of scope
+3. acceptance criteria
+4. edge cases/failure modes
+5. architecture options with recommendation
+6. test plan
+7. open questions
+```
+
+For a smaller feature, use:
+
+```text
+/build Spec only first: <feature>. Do not edit files until the spec and tests are agreed.
+```
+
+### 2. Implement after the spec is accepted
+
+```text
+/build Implement the accepted spec for <feature>.
+Use the existing code style. Make the smallest complete diff.
+Must include tests for the acceptance criteria and failure modes.
+After implementation, summarize changed files and how to run tests.
+```
+
+### 3. Review a PR/diff before shipping
+
+```text
+/review Review the current diff as a skeptical staff engineer.
+Focus on correctness, regression risk, maintainability, and test gaps.
+Group findings as Blocker / Major / Minor / Nit.
+Every finding must include file:line evidence and a concrete fix.
+Ignore style-only opinions unless they hide a real risk.
+```
+
+For GitHub PRs, give Copilot the PR URL or checked-out branch:
+
+```text
+/review Review PR <url>. Compare against main. Only report evidence-backed findings.
+```
+
+### 4. Security review
+
+```text
+/secaudit Threat-model the current diff.
+Focus on authN/authZ, injection, secrets, SSRF, deserialization, path traversal, supply chain, data exposure, and unsafe defaults.
+For every issue: exploit path, impacted asset, severity, and minimal fix.
+```
+
+### 5. Deep bug audit of a path
+
+```text
+/audit src/payments
+Find real bugs only. Use detector-validator discipline:
+- confirmed evidence first
+- no speculative findings without a reachable path
+- include file:line and repro/test idea
+- separate confirmed bugs from risk notes
+```
+
+### 6. Minimalism / delete dead weight
+
+```text
+/lazy Review this design/diff for over-engineering.
+Apply the restraint ladder:
+1. Does this need to exist?
+2. Can stdlib/native platform do it?
+3. Can an existing dependency do it?
+4. Can this be one line / one function?
+Return what to delete, simplify, or keep.
 ```
 
 ---
 
-## What This Is
+## Recommended workflow
 
-A complete AI coding harness that makes GitHub Copilot operate at elite engineering level. Not a collection of prompts — a self-evolving system that:
+### For building a feature
 
-- **Audits code** with a detector-validator pipeline (Gate 0 anti-confabulation, 6-lens rigor, cross-file comparison)
-- **Generates production code** through a 7-stage pipeline (Restraint → Spec → Architect → Contracts → Implement → Test → Review → Refactor)
-- **Orchestrates** multi-phase work with parallel lens dispatch and pre-flight budget gates
-- **Reviews security** with 24 symptom-CWE routes and expert intuitions for patterns base models miss
-- **Self-evolves** through golden source testing — every missed bug patches the skill
+```text
+/orchestrate <feature> spec only
+# review/edit spec
+/build implement accepted spec
+/review current diff
+/secaudit current diff
+/audit <changed paths>
+```
 
-## Installation
+### For reviewing an existing PR
+
+```text
+/review PR <url or branch>
+/secaudit PR <url or branch>
+/audit <critical paths>
+/lazy Is any abstraction/dependency/change unnecessary?
+```
+
+### For small one-line fixes
+
+Use `/build <fix>` directly. `nerd-code` has a mandatory complexity classifier and should take the trivial path when the root cause is clear, single-file, and ≤5 code lines.
+
+---
+
+## How to test the skills locally
+
+Run these from the root of this repo.
+
+### 1. Static anatomy audit for every skill
 
 ```bash
-# Clone into any project
-git clone https://github.com/stumman/hermes-harness-skills.git
-cp -r hermes-harness-skills/.github /path/to/your-project/.github
+for f in .agents/skills/*/SKILL.md; do
+  echo "== $f =="
+  python3 .agents/skills/skill-anatomy-optimizer/scripts/audit_skill.py "$f"
+done
 ```
 
-Copilot reads `.github/copilot-instructions.md` automatically on every session start.
+Expected: every skill returns `gate: true` or equivalent passing status.
 
-## Skills Included
+### 2. Eval/council loop smoke test
 
-| Skill | Version | Tokens | What It Does |
-|---|---|---|---|
-| **ponytail-audit** | v1.6.0 | 0.9K (subagent) | Code audit: detector-validator, Gate 0, evidence tags, 9-rung ladder |
-| **nerd-code** | v1.3.0 | 0.55K (subagent) | Code generation: 7-stage pipeline, test integrity sub-lens |
-| **conductor** | v1.3.0 | — | Orchestration: parallel lenses, pre-flight gate, think-in-code |
-| **security-sentinel** | v1.1.0 | — | Security: 24 symptom-CWE routes, expert intuitions |
-| **critical-review** | v1.0.0 | — | Severity: Blocker/Major/Minor/Nit classification |
-| **ponytail** | v1.0.0 | — | Restraint: "Does this need to exist?" |
-| **copilot-memory-harness** | v2.0.0 | — | Memory: persistent cross-session memory + skill self-improvement |
-
-## Agents Included
-
-| Agent | Model | Purpose |
-|---|---|---|
-| **sre-reviewer** | Sonnet | Production reliability: deployment regressions, config cascades, retry storms |
-| **security-auditor** | Opus | Deep security: 24 CWE routes, expert intuitions, unsuppressible findings |
-| **code-architect** | Sonnet | Architecture: dependency direction, boundaries, over-abstraction |
-
-## Token Efficiency
-
-| Version | 5-Lens Audit | Reduction |
-|---|---|---|
-| v1.0.0 (baseline) | 440,560 tokens | — |
-| v1.2.0 (subagent mode) | 144,550 tokens | −67% |
-| **v1.3.0 (current)** | **100,550 tokens** | **−77%** |
-
-Mechanisms: Subagent Mode (98% skill reduction), Think-in-Code sandbox (99%), Pass-by-Reference (80%), Tool Compression (82%), Pre-Flight Budget Gate.
-
-## Validation
-
-- **2,400 planted bugs** across TypeScript + Java golden sources
-- **60/40 held-out split** — training (cron loop) vs validation (meta-watcher)
-- **Youden's Index: 0.92** (OWASP Benchmark standard = Sensitivity + Specificity − 1)
-- **99.7% detection rate** with overfitting guard
-- Backed by **Google SRE data** (thousands of postmortems, 2010-2017)
-- Aligned with **KDD 2026 research** (EvoDS: ASA + ACC, Agent Capsules: quality-gated execution)
-
-## Self-Evolving Loop
-
-```
-Golden Source (2,400 bugs, 60/40 split)
-     │
-     ▼
-Audit → Measure (Detection + Youden + Delta + FPR)
-     │
-     ▼
-Miss found? → Patch skill → Version bump → CHANGELOG with what/why/proof
-100% detection? → Expand golden source → New bug categories
-Every 5th iteration → Competitive research (arXiv + GitHub + Industry)
-     │
-     ▼
-Meta-Watcher validates on HELD-OUT set → Overfitting detection
-     │
-     ▼
-Report to user
+```bash
+python3 .agents/evals/scripts/council_loop.py
 ```
 
-## Research Foundation
+Outputs:
 
-- **Google SRE Workbook** — Appendix C: 68% of outages triggered by changes (binary + config)
-- **OWASP Benchmark** (805★) — Industry standard for SAST evaluation (Youden's Index)
-- **EvoDS** (KDD 2026) — Adaptive Context Compression + Autonomous Skill Acquisition (+28.9%)
-- **Agent Capsules** (arXiv 2026) — Quality-gated compound execution (anti-context-injection finding)
-- **context-mode** (17K★) — Think-in-Code sandbox (700KB→3.6KB, 99% reduction)
-- **TokenZip** — Pass-by-reference inter-agent communication (80% payload reduction)
+```text
+.agents/evals/reports/latest/council_report.json
+.agents/evals/reports/latest/council_report.md
+.agents/evals/decisions/decision_log.jsonl
+```
+
+Interpretation:
+
+- `validation_errors = 0` is required.
+- `skill_audit_failures = 0` is required before claiming the repo is healthy.
+- `hold_for_review` means candidate source may be useful but is not approved.
+- `discard` means the candidate/approach did not meet quality gates.
+
+### 3. Harvest public PR candidates
+
+```bash
+python3 .agents/evals/scripts/harvest_github_prs.py --per-skill 3
+```
+
+This stores metadata only. It does **not** vendor third-party code.
+
+### 4. JSON/JSONL validation
+
+```bash
+python3 - <<'PY'
+from pathlib import Path
+import json
+for p in Path('.agents/evals').rglob('*.json'):
+    json.loads(p.read_text())
+for p in Path('.agents/evals').rglob('*.jsonl'):
+    for i,line in enumerate(p.read_text().splitlines(),1):
+        if line.strip(): json.loads(line)
+print('json/jsonl ok')
+PY
+```
+
+---
+
+## How to use evals correctly
+
+The eval data is for **keep/revert decisions**, not vibes.
+
+Rules:
+
+1. Candidate cases start as `review_status: candidate`.
+2. Do not call a case golden until provenance, license risk, and grader are reviewed.
+3. Do not call a skill better unless it beats the baseline on the same cases.
+4. Prefer executable/end-state checks over LLM-judge opinions.
+5. Keep TRAIN / VALIDATION / TEST separate.
+6. Any failed approach is logged and discarded instead of patched around silently.
+
+The 30-minute council loop follows this principle: summarize what was harvested, held, discarded, or failed; do not overclaim.
+
+---
+
+## Maintenance commands
+
+```bash
+# inspect repo cleanliness
+git status --short --branch
+
+# run council smoke test
+python3 .agents/evals/scripts/council_loop.py
+
+# audit all skills
+for f in .agents/skills/*/SKILL.md; do python3 .agents/skills/skill-anatomy-optimizer/scripts/audit_skill.py "$f"; done
+```
+
+When editing a skill:
+
+1. Change `SKILL.md` minimally.
+2. Run the anatomy audit.
+3. Run relevant eval cases or council smoke test.
+4. Keep only measured improvements; revert or discard failures.
+
+---
 
 ## License
 

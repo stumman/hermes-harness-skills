@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Copilot Harness (watch)",
+      "type": "shell",
+      "command": "python3 ~/.copilot-harness/build.py --watch",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "copilot-harness",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Watcher ready",
+          "endsPattern": "Build complete"
+        }
+      },
+      "presentation": { "reveal": "silent", "panel": "dedicated" },
+      "runOptions": { "runOn": "folderOpen" }
+    },
+    {
+      "label": "Copilot Harness (rebuild once)",
+      "type": "shell",
+      "command": "python3 ~/.copilot-harness/build.py",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    }
+  ]
+}

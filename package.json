@@ -12,18 +12,20 @@
     "type": "skill-pack",
     "entrypoint": ".github/copilot-instructions.md",
     "skills": [
-      ".github/skills/ponytail.md",
-      ".github/skills/ponytail-audit.md",
-      ".github/skills/nerd-code.md",
-      ".github/skills/conductor.md",
-      ".github/skills/critical-review.md",
-      ".github/skills/security-sentinel.md",
-      ".github/skills/copilot-memory-harness.md"
+      ".agents/skills/ponytail/SKILL.md",
+      ".agents/skills/ponytail-audit/SKILL.md",
+      ".agents/skills/nerd-code/SKILL.md",
+      ".agents/skills/conductor/SKILL.md",
+      ".agents/skills/critical-review/SKILL.md",
+      ".agents/skills/security-sentinel/SKILL.md",
+      ".agents/skills/copilot-memory-harness/SKILL.md",
+      ".agents/skills/skill-doctor/SKILL.md",
+      ".agents/skills/skill-anatomy-optimizer/SKILL.md"
     ],
     "agents": [
-      ".github/agents/sre-reviewer.md",
-      ".github/agents/security-auditor.md",
-      ".github/agents/code-architect.md"
+      ".github/agents/sre-reviewer.agent.md",
+      ".github/agents/security-auditor.agent.md",
+      ".github/agents/code-architect.agent.md"
     ]
   },
   "keywords": [
@@ -44,7 +46,7 @@
     "youden_index": "0.92",
     "cwe_coverage": 28,
     "owasp_coverage": 16,
-    "skills_count": 7,
+    "skills_count": 9,
     "vault_pages": 45,
     "cron_jobs": 6
   }

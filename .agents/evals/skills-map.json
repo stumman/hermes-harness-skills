@@ -1,0 +1,47 @@
+{
+  "ponytail": {
+    "goal": "reward deletion, dependency avoidance, stdlib/native solutions, and minimal sufficient changes",
+    "golden_sources": ["microsoft/vscode dependency-removal PRs", "nodejs/node small bugfix PRs", "commitpack small simplification commits"],
+    "graders": ["diff-size", "dependency-delta", "behavioral-test-pass", "pairwise minimality judge"]
+  },
+  "ponytail-audit": {
+    "goal": "detect real defects in PR diffs with evidence and severity",
+    "golden_sources": ["envoyproxy/envoy bugfix PRs", "kubernetes/kubernetes bugfix PRs", "CodeReviewer"],
+    "graders": ["expected finding match", "false-positive rate", "severity calibration", "evidence citation"]
+  },
+  "nerd-code": {
+    "goal": "build or fix production code from vague or issue-like prompts and pass tests",
+    "golden_sources": ["SWE-bench Verified", "SWE-bench Lite", "DevEval", "microsoft/vscode PRs"],
+    "graders": ["patch applies", "tests pass", "minimal unrelated changes", "acceptance criteria coverage"]
+  },
+  "conductor": {
+    "goal": "orchestrate multi-phase/multi-file changes with handoffs and validation",
+    "golden_sources": ["rust-lang/rust rollups/refactors", "kubernetes feature PRs", "BugSwarm CI transitions"],
+    "graders": ["plan completeness", "phase separation", "subtask independence", "end-state pass"]
+  },
+  "critical-review": {
+    "goal": "prioritize severity and block release-impacting issues without noise",
+    "golden_sources": ["nodejs/node semver-major PRs", "release-blocker PR labels", "CodeReviewer"],
+    "graders": ["severity match", "blocker recall", "nit false-positive rate", "actionability"]
+  },
+  "security-sentinel": {
+    "goal": "find and repair security vulnerabilities with CWE/OWASP mapping",
+    "golden_sources": ["CVEfixes", "Vul4J", "Big-Vul", "OWASP Benchmark", "Kubernetes security-sensitive PRs"],
+    "graders": ["CWE match", "exploit/test fixed", "no unsafe remediation", "false-positive rate"]
+  },
+  "copilot-memory-harness": {
+    "goal": "turn durable lessons/traces into useful instructions without stale memory or leakage",
+    "golden_sources": ["AGENTS.md changes", "Copilot prompt-file PRs", "OpenHands microagents", "production trace regressions"],
+    "graders": ["memory relevance", "privacy/no-secret", "future utility", "no session-progress leakage"]
+  },
+  "skill-doctor": {
+    "goal": "diagnose and improve skills via bounded patches and keep-or-revert",
+    "golden_sources": ["Promptfoo configs", "DSPy optimizer examples", "real skill diffs in this repo"],
+    "graders": ["static lint delta", "behavioral eval delta", "patch minimality", "zero regression"]
+  },
+  "skill-anatomy-optimizer": {
+    "goal": "audit skill anatomy, generate eval design, and enforce research-grade proof of improvement",
+    "golden_sources": ["Claude subagents", "OpenHands microagents", "AGENTS.md", "Copilot prompt files", "Promptfoo eval suites"],
+    "graders": ["anatomy completeness", "eval quality", "source provenance", "keep/revert correctness"]
+  }
+}

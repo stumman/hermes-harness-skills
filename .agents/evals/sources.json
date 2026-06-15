@@ -1,0 +1,72 @@
+{
+  "real_issue_patch_benchmarks": [
+    {
+      "name": "SWE-bench Verified",
+      "url": "https://huggingface.co/datasets/princeton-nlp/SWE-bench_Verified",
+      "best_for": ["nerd-code", "conductor", "ponytail-audit"],
+      "gold_signal": "human-validated real GitHub issue + merged patch + tests"
+    },
+    {
+      "name": "SWE-bench Lite",
+      "url": "https://huggingface.co/datasets/princeton-nlp/SWE-bench_Lite",
+      "best_for": ["nerd-code", "conductor"],
+      "gold_signal": "smaller real issue-to-patch benchmark"
+    },
+    {
+      "name": "Defects4J",
+      "url": "https://github.com/rjust/defects4j",
+      "best_for": ["nerd-code", "ponytail-audit"],
+      "gold_signal": "real Java buggy/fixed revisions with tests"
+    },
+    {
+      "name": "BugsInPy",
+      "url": "https://github.com/soarsmu/BugsInPy",
+      "best_for": ["nerd-code", "ponytail-audit"],
+      "gold_signal": "real Python bugs with tests"
+    },
+    {
+      "name": "BugSwarm",
+      "url": "https://github.com/BugSwarm/bugswarm",
+      "best_for": ["conductor", "critical-review", "ponytail-audit"],
+      "gold_signal": "failing and passing CI job pairs"
+    },
+    {
+      "name": "CodeReviewer",
+      "url": "https://github.com/microsoft/CodeBERT/tree/master/CodeReviewer",
+      "best_for": ["ponytail-audit", "critical-review", "skill-doctor"],
+      "gold_signal": "real PR diffs, review comments, and revised code"
+    },
+    {
+      "name": "CVEfixes",
+      "url": "https://github.com/secureIT-project/CVEfixes",
+      "best_for": ["security-sentinel", "critical-review"],
+      "gold_signal": "CVE-linked security-fix commits"
+    },
+    {
+      "name": "Vul4J",
+      "url": "https://github.com/tuhh-softsec/vul4j",
+      "best_for": ["security-sentinel", "nerd-code"],
+      "gold_signal": "real Java vulnerabilities with reproducible tests/exploits"
+    }
+  ],
+  "enterprise_repos_for_pr_harvesting": [
+    "microsoft/vscode",
+    "kubernetes/kubernetes",
+    "envoyproxy/envoy",
+    "nodejs/node",
+    "rust-lang/rust",
+    "postgres/postgres",
+    "elastic/elasticsearch",
+    "apache/arrow",
+    "facebook/react",
+    "microsoft/TypeScript"
+  ],
+  "eval_frameworks_to_imitate": [
+    "https://github.com/openai/evals",
+    "https://github.com/UKGovernmentBEIS/inspect_ai",
+    "https://github.com/promptfoo/promptfoo",
+    "https://github.com/stanfordnlp/dspy",
+    "https://github.com/confident-ai/deepeval",
+    "https://github.com/explodinggradients/ragas"
+  ]
+}

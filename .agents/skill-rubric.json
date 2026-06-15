@@ -1,0 +1,120 @@
+{
+  "rubric": [
+    {
+      "criterion": "Location & folder identity: SKILL.md sits at a documented root (.github/.claude/.agents/skills or personal equivalents) and the parent folder name exactly equals the frontmatter name.",
+      "points": 8,
+      "check": "Path matches one documented root AND ends in /<X>/SKILL.md where X == frontmatter name. Award 8 if both true, 0 otherwise (silent-load precondition)."
+    },
+    {
+      "criterion": "name validity: matches ^[a-z0-9-]{1,64}$ (no uppercase/space/underscore/dot/colon/slash/namespace prefix).",
+      "points": 6,
+      "check": "Regex test on name field. 6 if pass, 0 if fail."
+    },
+    {
+      "criterion": "Frontmatter is a subset of the six documented keys (name, description, argument-hint, user-invocable, disable-model-invocation, context) with no invented keys.",
+      "points": 8,
+      "check": "count(keys NOT in the six) == 0 -> 8 pts; subtract 2 per extra key, floor 0."
+    },
+    {
+      "criterion": "No optional field written at its default and not both invocation paths disabled.",
+      "points": 4,
+      "check": "2 pts: no key among {user-invocable:true, disable-model-invocation:false, context:inline} present. 2 pts: NOT(user-invocable==false AND disable-model-invocation==true)."
+    },
+    {
+      "criterion": "context: fork used correctly: absent unless body describes a multi-step isolated/verbose procedure; if present, value is exactly 'fork'.",
+      "points": 3,
+      "check": "If context absent -> 3. If context==fork AND body has a multi-step procedure -> 3. If context present with any other value, or fork without a heavy procedure -> 0."
+    },
+    {
+      "criterion": "Description has both halves: a capability clause AND a trigger clause containing 'Use when'/'Use this when'.",
+      "points": 10,
+      "check": "grep description for 'Use ' (case-insensitive) AND non-empty text before first period. 10 if both present, 5 if only one, 0 if neither."
+    },
+    {
+      "criterion": "Description carries >=2 concrete user-facing trigger phrases (verb+object echoing user wording) and the most distinctive term appears within first 80 chars.",
+      "points": 8,
+      "check": "4 pts if >=2 distinct trigger phrases; 4 pts if index of distinctive domain/action term < 80."
+    },
+    {
+      "criterion": "Description length within budget: <=1024 chars (hard) and ideally 120-300.",
+      "points": 6,
+      "check": ">1024 -> 0. 120-300 -> 6. 301-1024 -> 3. <120 -> 4."
+    },
+    {
+      "criterion": "Description free of version/changelog tokens, implementation mechanics (file/script names, extensions, CLI flags, bracket payloads, >=3-stage arrow chains), and how-to/relative-path content.",
+      "points": 7,
+      "check": "grep description for /v?\\d+\\.\\d+(\\.\\d+)?/, 'adds','now supports','changelog', file extensions (.py/.js/.ts/.sh), --\\w+, \\[[A-Z_/]+\\], (\\w+ \u2192 \\w+ \u2192 \\w+), 'references/','scripts/', numbered steps. 7 if zero matches; -2 per category hit, floor 0."
+    },
+    {
+      "criterion": "Description free of marketing/persona adjectives; first word is a capability verb or 'Guide for'.",
+      "points": 4,
+      "check": "grep banned list (powerful/ultra/rigorous(ly)/brain/seamless/blazing/world-class/elite/state-of-the-art/best-in-class/revolutionary). 4 if zero AND first word is a verb/'Guide for'; 0 otherwise."
+    },
+    {
+      "criterion": "Negative-scope disambiguation present when a sibling skill shares >=3 trigger nouns/verbs.",
+      "points": 3,
+      "check": "If no overlapping sibling -> 3 (N/A pass). If overlap exists, require a 'NOT for'/'Do NOT use' clause naming the sibling -> 3 if present, 0 if missing."
+    },
+    {
+      "criterion": "Body length budget: <=200 lines / <=500 words / <=~2000 tokens; >3000 tokens (~>5KB) is a hard smell.",
+      "points": 8,
+      "check": "Strip frontmatter, wc. <=500 words -> 8. 501-1000 -> 5. 1001-~3000 tok -> 2. >3000 tok or >5KB -> 0."
+    },
+    {
+      "criterion": "Body inlines only every-run content: ordered procedure present; gates phrased MUST/NEVER/ALWAYS; >=1 tier-3 link when deep material exists.",
+      "points": 6,
+      "check": "2 pts ordered steps present; 2 pts gates use MUST/NEVER/ALWAYS; 2 pts at least one relative link if any deep material exists."
+    },
+    {
+      "criterion": "Conditional/large content externalized: no body block >15 lines gated on a condition true <100% of the time (search 'if you are using','for <language>'); examples >15 lines live in references/.",
+      "points": 6,
+      "check": "Count body blocks >15 lines that are conditional or example-grade. 6 if zero; -2 each, floor 0."
+    },
+    {
+      "criterion": "Telegraphic style: rules are imperatives; no bullet >60 words; no multi-sentence narrative stories where a pattern->fix clause suffices.",
+      "points": 3,
+      "check": "Flag bullets >60 words. 3 if zero; -1 each, floor 0."
+    },
+    {
+      "criterion": "No reference orphans: every file in the skill folder except SKILL.md is linked from the body by relative path.",
+      "points": 5,
+      "check": "For each folder file (excl SKILL.md/.DS_Store), grep basename in SKILL.md. 5 if orphan count==0; -1 per orphan, floor 0."
+    },
+    {
+      "criterion": "No dangling links: every ./references or ./scripts relative path named in the body resolves to an existing file.",
+      "points": 5,
+      "check": "For each ./path token, test -f. 5 if all resolve; -1 per dangling, floor 0."
+    },
+    {
+      "criterion": "Link discipline: links use ./ relative Markdown form (no absolute paths/bare filenames) and include a when/why clause.",
+      "points": 2,
+      "check": "1 pt all links ./relative; 1 pt each link line carries when/before/if/'\u2014 ' clause."
+    },
+    {
+      "criterion": "Single source of truth: no paragraph/example duplicated across body and a referenced file; body does not restate the description; no condensed+expanded duplicate of the same rules.",
+      "points": 3,
+      "check": "Diff for shared blocks >=8 shared keywords between two regions, and body-vs-description overlap. 3 if no duplication; 0 if a duplicated block found."
+    },
+    {
+      "criterion": "No version/provenance/self-evolution tokens anywhere in frontmatter or body.",
+      "points": 3,
+      "check": "grep -nE 'v[0-9]+\\.[0-9]+\\.[0-9]+|iter[0-9]+|\u2014 NEW|\u2014 UPDATED|version history|release notes'. 3 if zero matches, 0 otherwise."
+    },
+    {
+      "criterion": "No benchmark statistics / internal-project lore in instruction prose.",
+      "points": 2,
+      "check": "grep -nE '[0-9]+%|~[0-9]+x|faster|fewer tool|token savings|benchmark|repro rate|production audits'. 2 if zero in prose, 0 otherwise."
+    },
+    {
+      "criterion": "No author-backlog TODOs in instruction prose (TODO/FIXME/XXX/WIP/'implement later'/'for now'), excluding tokens that are content categories the skill operates on.",
+      "points": 2,
+      "check": "grep -niE 'TODO|FIXME|XXX|WIP|implement later|for now' in directive prose. 2 if zero, 0 otherwise."
+    },
+    {
+      "criterion": "No marketing fluff/self-congratulation in name+body (mirrors description check across the whole file).",
+      "points": 2,
+      "check": "grep -niE 'world-class|state-of-the-art|cutting-edge|blazing|elite|seamless|revolutionary|best-in-class|powerful|ultra' across name+body. 2 if zero, 0 otherwise."
+    }
+  ],
+  "tokenBudgets": "DESCRIPTION (tier 1, scanned every relevant turn for every skill): hard ceiling 1024 characters (documented platform max \u2014 exceeding it is INVALID). Target 120-300 characters / 1-3 sentences. Official exemplars are ~95-115 chars, so 120-300 is generous. The 120-300 target is a council inference; only the 1024 cap is in the docs. Must be dominated by capability + trigger phrases, not adjectives. Repo offenders measured: copilot-memory-harness ~794 chars, ponytail-audit ~814 chars (both ~3x over target, paying on every scan).\n\nBODY (tier 2, loaded in full on every activation): NO length limit exists in the official docs (the only documented numeric caps are name<=64 chars and description<=1024 chars) \u2014 these are council inferences for token economy. Target <=200 lines / <=500 words / ~2000 tokens of recurring content. SMELL THRESHOLD: >3000 tokens (roughly >5KB) triggers a mandatory body-vs-references audit. Reference-grade exemplar of a lean body: critical-review at 1970 B / 283 words. Offenders: nerd-code 48667 B / 7001 words and ponytail-audit 46169 B / 6178 words \u2014 ~9x+ over target and prime split candidates.\n\nREFERENCE SPILL THRESHOLD (when to move tier-2 -> tier-3): externalize any block that is (a) >~15 lines OR (b) conditional / needed <100% of invocations (language-specific deep-dives, large lookup tables, worked examples, edge cases, templates, scripts). Do NOT externalize content smaller than ~15 lines unless it is a script/template \u2014 the link's attention cost then exceeds the inlining cost. Every spilled file MUST be linked by ./relative Markdown path with when-to-follow text; unlinked files never load (dead weight) and dangling links cost tier-2 tokens for nothing.\n\nPER-RULE BODY BUDGET: each rule = imperative directive + optional one-clause why. Flag any single bullet >60 words. Compress load-bearing examples to a `pattern -> fix` clause; reserve full worked examples for references/.\n\nZERO-TIER CONTENT (belongs in no tier \u2014 move outside the skill folder or to git history): version strings, iterNN markers, changelog/release notes, benchmark percentages/multipliers, named internal-project lore, author TODOs, marketing adjectives. Each such token is recurring cost with zero behavioral effect."
+}
