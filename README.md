@@ -10,6 +10,7 @@ This repo is intentionally split into two layers:
 .github/agents/                 # optional specialist review personas
 .github/copilot-instructions.md # always-on repository guidance
 .agents/evals/                  # research/eval council, golden-source cases, candidate harvesters
+.agents/feedback/               # feedback ledger for self-improving local companion skills
 ```
 
 The canonical skills live in `.agents/skills/<skill>/SKILL.md`. Long references and helper scripts sit beside each skill so the main skill stays small and Copilot only loads deeper material when needed.
@@ -63,6 +64,13 @@ Current skills:
 | `copilot-memory-harness` | Set up persistent project memory and Copilot working-memory conventions | direct request |
 | `skill-doctor` | Improve a skill using eval-backed, keep/revert discipline | `improve-skill.prompt.md` |
 | `skill-anatomy-optimizer` | Static anatomy audit of skills against the repo standard | `diagnose-skill.prompt.md` |
+
+Self-improvement companions:
+
+| Skill | Purpose |
+|---|---|
+| `critical-review-local`, `security-sentinel-local`, `nerd-code-local`, `ponytail-audit-local` | Project-specific learning surfaces. These may accumulate reviewed feedback patterns; core skills remain stable. |
+| `update-critical-review`, `update-security-sentinel`, `update-nerd-code`, `update-ponytail-audit` | Outer-loop skills that read `.agents/feedback/skill-feedback.jsonl` and propose minimal diffs to the matching `*-local` companion only. |
 
 ---
 
@@ -240,6 +248,57 @@ for p in Path('.agents/evals').rglob('*.jsonl'):
 print('json/jsonl ok')
 PY
 ```
+
+---
+
+## Self-improving Skill loop
+
+This repo now follows an Oz-style inner/outer loop model:
+
+```text
+inner loop: use a core Skill on real work
+feedback: human/test/maintainer correction is recorded
+outer loop: update-* Skill proposes a diff to the matching *-local companion
+promotion: validator/evals/human review decide keep vs revert
+```
+
+Core Skills are stable contracts. Local companion Skills are the bounded learning surface:
+
+```text
+.agents/skills/critical-review/SKILL.md        # core contract
+.agents/skills/critical-review-local/SKILL.md  # repo-specific feedback patterns
+.agents/skills/update-critical-review/SKILL.md # outer improvement loop
+```
+
+Record feedback manually:
+
+```bash
+python3 .agents/feedback/scripts/record_feedback.py \
+  --skill critical-review \
+  --type false_positive \
+  --source github_pr_review \
+  --repo org/repo \
+  --pr 123 \
+  --agent-output "Major: retry race in payment worker" \
+  --human-feedback "False positive: per-key lock middleware serializes this path" \
+  --strength explicit_maintainer_statement \
+  --desired-update "Check upstream locking before reporting retry races."
+```
+
+Validate feedback records:
+
+```bash
+python3 .agents/feedback/scripts/validate_feedback.py
+```
+
+Promotion rules:
+
+1. Do not learn from one weak anecdote.
+2. Promote only repeated patterns, explicit maintainer statements, eval failures, incident action items, or security-critical feedback.
+3. Update Skills may patch only their matching `*-local/SKILL.md` file.
+4. Core Skill edits require separate human review and stronger eval evidence.
+5. Outer loops propose reviewable diffs; they do not silently mutate production behavior.
+6. Prefer code/tool/eval fixes over prompt growth when the failure is deterministic.
 
 ---
 

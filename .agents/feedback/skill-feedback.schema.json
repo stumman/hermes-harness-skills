@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/stumman/hermes-harness-skills/.agents/feedback/skill-feedback.schema.json",
+  "title": "Hermes Skill Feedback Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "timestamp",
+    "skill",
+    "skill_commit",
+    "source",
+    "feedback_type",
+    "strength",
+    "agent_output",
+    "human_feedback",
+    "review_status"
+  ],
+  "properties": {
+    "timestamp": { "type": "string", "format": "date-time" },
+    "skill": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "skill_commit": { "type": "string" },
+    "source": {
+      "type": "string",
+      "enum": ["github_pr_review", "github_issue", "eval_failure", "incident", "user_correction", "manual_review", "other"]
+    },
+    "repo": { "type": "string" },
+    "pr": { "type": ["integer", "null"], "minimum": 1 },
+    "issue": { "type": ["integer", "null"], "minimum": 1 },
+    "run_id": { "type": "string" },
+    "case_id": { "type": "string" },
+    "agent_output": { "type": "string", "minLength": 1 },
+    "human_feedback": { "type": "string", "minLength": 1 },
+    "feedback_type": {
+      "type": "string",
+      "enum": ["false_positive", "false_negative", "wrong_severity", "unactionable", "wrong_fix", "overbuilt", "missed_simplification", "test_failure", "policy_violation", "positive_signal", "other"]
+    },
+    "strength": {
+      "type": "string",
+      "enum": ["weak", "repeated_pattern", "explicit_maintainer_statement", "eval_failure", "incident_action_item", "security_critical"]
+    },
+    "desired_update": { "type": "string" },
+    "evidence_urls": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "review_status": { "type": "string", "enum": ["candidate", "hold_for_review", "approved_for_local_patch", "discarded"] },
+    "review_notes": { "type": "string" }
+  }
+}
